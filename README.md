@@ -1,4 +1,4 @@
-# Application for uploading video from a cloud service
+# Application To Upload/Download video To/From A Cloud Service
 
 This project is my solution to Jules White's first assignement on
 [coursera](https://www.coursera.org/learn/cloud-services-java-spring-framework).
