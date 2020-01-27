@@ -1,4 +1,7 @@
-# Assignment 1
+# Application for uploading video from a cloud service
+
+This project is my solution to Jules White's first assignement on
+[coursera](https://www.coursera.org/learn/cloud-services-java-spring-framework).
 
 ## Running the Application
 
@@ -23,11 +26,6 @@ the core knowledge needed to create much more sophisticated cloud services.
 
 
 ## Instructions
-
-First, clone this Git repository and import it into Eclipse as a Gradle Project.
-You can do this from the "File" menu by selecting "Import". Expand the "Gradle"
-option and then choose "Existing Gradle Project". Select the root folder of this 
-project and then hit "Finish".
 
 This assignment tests your ability to create a web application that
 allows clients to upload videos to a server. The server allows clients
@@ -136,143 +134,3 @@ Run As->Java Application. The AutoGrading application will run AutoGradingTest a
 summary of the test results and your score to the Eclipse Console (Window->Show View->Console). 
 The AutoGrading application will also create a submission package that you will submit as the
 solution to the assignment in Coursera.
-
-## Submitting Your Assignment
-
-To submit your assignment, you must first run the AutoGrading application as described in the previous
-step to create your submission package. Make sure that you take note of the name of the submission
-package that is printed in the console to ensure that you submit the correct file. You should
-submit the submission package that is generated as the solution file on Coursera's website. 
-
-After submitting  your solution to Coursera, your submission package will be sent to the auto-grading
-servers. It may take a few minutes for a score to be assigned to your submission. Once the submission
-is graded, a detailed score will be registered with Coursera.
-
-Note: locally running the AutoGrading application DOES NOT submit your solution to Coursera and will
-not be counted as a valid submission. The grade that you see when running the AutoGrading application
-is an estimate of your grade only. You must correctly submit the solution to Coursera to receive an
-official grade.
-
- 
-## Provided Code
-
-- __org.magnum.dataup.Video__: This is a simple class to represent the metadata for a video.
-  You can create one using a builder like this:
-  
-```java
-  Video video = Video.create().withContentType("video/mpeg")
-			.withDuration(123).withSubject("Mobile Cloud")
-			.withTitle("Programming Cloud Services for ...").build();
-```
-  You can also accept a Video from an application/json request body or return the
-  JSON of a video like this:
-```java
-  	@RequestMapping(value = "/funny/video", method = RequestMethod.POST)
-	public @ResponseBody Video addVideo(@RequestBody Video v){
-		// Do something with the Video
-		// ...
-		return v;
-	}
-```
-- __org.magnum.dataup.VideoFileManager__: This is a class that you can (but are not required) to
-  use to store video binary data to the file system. By default, it will store all videos to
-  a "videos" directory in the current working directory. You can use this class as follows:
-```java
-    // Initialize this member variable somewhere with 
-    // videoDataMgr = VideoFileManager.get()
-    //
-    private VideoFileManager videoDataMgr;
-
-    // You would need some Controller method to call this...
-  	public void saveSomeVideo(Video v, MultipartFile videoData) throws IOException {
-  	     videoDataMgr.saveVideoData(video, videoData.getInputStream());
-  	}
-  	
-  	public void serveSomeVideo(Video v, HttpServletResponse response) throws IOException {
-  	     // Of course, you would need to send some headers, etc. to the
-  	     // client too!
-  	     //  ...
-  	     videoDataMgr.copyVideoData(v, response.getOutputStream());
-  	}
-```
-  
- 
-## Hints
-
-- The examples in GitHub will be helpful on this assignment
-- A valid solution is going to have at least one class annotated with @Controller
-- There will probably need to be at least 4 different methods annotated with @RequestMapping to
-  implement the HTTP API described
-- Any Controller method can take an HttpServletRequest or HttpServletResponse as parameters to 
-  gain low-level access/control over the HTTP messages. Spring will automatically fill in these
-  parameters when your Controller's method is invoked:
-```java
-        ...
-        @RequestMapping("/some/path/{id}")
-        public MyObject doSomething(
-                   @PathVariable("id") String id, 
-                   @RequestParam("something") String data,
-                   HttpServletResponse response) {
-         
-            // Maybe you want to set the status code with the response
-            // or write some binary data to an OutputStream obtained from
-            // the HttpServletResponse object
-            ....       
-        }
-        
-```
-- The IDs must be of type long. The tests send long values to the server and will generate
-  400 response codes if you use an int.
-- If you get an error 400, you have incorrectly specified the parameter values that the method
-  should accept and their mapping to HTTP parameters.
-- One of the Controller methods that is annotated with @RequestMapping is probably going to need 
-  to take an HttpServletResponse object as a parameter and use this object to write out binary data 
-  that should be sent to the client. 
-- There are multiple ways to implement most pieces of the application. Any solution that passes
-  the tests will be given full credit.
-- None of your Controllers or other classes should "implement VideoSvcApi" -- which is an interface
-  that is only used to create a Retrofit client. None of your classes should look like this:
-```java
-        public class SomeClass implements VideoSvcApi // Don't implement this interface! 
-        {
-          ...
-        }
-```        
-- You can use a method like the following to figure out the address of your server and generate a 
-  data url for a video:
-```java
-        private String getDataUrl(long videoId){
-            String url = getUrlBaseForLocalServer() + "/video/" + videoId + "/data";
-            return url;
-        }
-
-     	private String getUrlBaseForLocalServer() {
-		   HttpServletRequest request = 
-		       ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-		   String base = 
-		      "http://"+request.getServerName() 
-		      + ((request.getServerPort() != 80) ? ":"+request.getServerPort() : "");
-		   return base;
-		}
-```
-- One way to generate a unique ID for each video is to use an AtomicLong similar to this:
-```java
-    private static final AtomicLong currentId = new AtomicLong(0L);
-	
-	private Map<Long,Video> videos = new HashMap<Long, Video>();
-
-  	public Video save(Video entity) {
-		checkAndSetId(entity);
-		videos.put(entity.getId(), entity);
-		return entity;
-	}
-
-	private void checkAndSetId(Video entity) {
-		if(entity.getId() == 0){
-			entity.setId(currentId.incrementAndGet());
-		}
-	}
-```
-
-
-
