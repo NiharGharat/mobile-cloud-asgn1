@@ -34,10 +34,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.LinkedList;
+
+import static org.magnum.dataup.MyService.last_id;
 
 
 @RestController
@@ -56,7 +56,6 @@ public class MyController {
 		}
 	}
 
-//	@GetMapping(value= "/video")
 	@RequestMapping(value= "/video", method= RequestMethod.GET)
 	@ResponseBody
 	public LinkedList<Video> getVidsList()
@@ -64,42 +63,47 @@ public class MyController {
 		return service_t.getVidsLis();
 	}
 
+	/*Upload video's meta data*/
 	@RequestMapping(value= "/video", method= RequestMethod.POST)
 	@ResponseBody
 	public Video uploadVideoData(@RequestBody Video vid)
 	{
-		vid.setId(MyService.last_id.incrementAndGet());
+		vid.setId(last_id.incrementAndGet());
 		vid.setDataUrl(getDataUrl(vid.getId()));
 		service_t.addVideoInf(vid);
-
 		return vid;
 	}
 
 	@RequestMapping(value= "/video/{id}/data", method= RequestMethod.POST)
 	@ResponseBody
-	public ResponseEntity<VideoStatus> uploadVideo(@RequestParam("file") MultipartFile file, @PathVariable("id") int id)
+	public ResponseEntity<VideoStatus> uploadVideo(@RequestParam("data") MultipartFile file, @PathVariable("id") long id)
 	{
 		try
 		{
-			service_t.storeFile(id , file);
+			if(service_t.storeFile(id , file)) return new ResponseEntity(new VideoStatus(VideoStatus.VideoState.READY), HttpStatus.OK);
+			else return new ResponseEntity( HttpStatus.NOT_FOUND);
 		}
 		catch(IOException e)
 		{
-			return  new ResponseEntity( HttpStatus.NOT_FOUND);
+			return new ResponseEntity( HttpStatus.NOT_FOUND);
 		}
-		return new ResponseEntity(new VideoStatus(VideoStatus.VideoState.READY), HttpStatus.OK);
 
 	}
 
-
 	@RequestMapping(value= "/video/{id}/data", method= RequestMethod.GET)
 	@ResponseBody
-	public OutputStream getSepecificVid(@PathVariable("id") int id) throws IOException {
-		InputStream inStrm = null;
-		OutputStream outStrm = null;
-		service_t.getStreamById(id, inStrm);
-		IOUtils.copy(inStrm,outStrm);
-		return outStrm;
+	public ResponseEntity< byte[]> getSepecificVid(@PathVariable("id") Long id) {
+		PipedInputStream inStrm = new PipedInputStream();
+		try
+		{
+			if(!service_t.getStreamById(id, inStrm)) return new ResponseEntity(HttpStatus.NOT_FOUND);
+			return new ResponseEntity(IOUtils.toByteArray(inStrm), HttpStatus.OK);
+		}
+		catch (Exception e)
+		{
+			return new ResponseEntity(HttpStatus.NOT_FOUND);
+		}
+
 	}
 
 	private String getDataUrl(long videoId){

@@ -2,6 +2,7 @@ package org.magnum.dataup;
 
 import org.magnum.dataup.model.Video;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -10,7 +11,7 @@ import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
-
+@Component
 public class MyService
 {
     public static AtomicLong last_id;
@@ -19,7 +20,7 @@ public class MyService
 
     @Autowired
     public MyService() throws IOException {
-        LinkedList<Video> addedVids= new LinkedList<Video>();
+        addedVids= new LinkedList<>();
         fileManager = VideoFileManager.get();
         last_id = new AtomicLong(1);
     }
@@ -34,7 +35,7 @@ public class MyService
         return addedVids.add(vid);
     }
 
-    public void getStreamById(int id, InputStream in) throws IOException {
+    public boolean getStreamById(Long id, InputStream in) throws IOException {
         Video searchedVid = null;
         for(Video vid: addedVids)
         {
@@ -45,12 +46,15 @@ public class MyService
         }
         if(searchedVid != null)
         {
+            System.out.println("vid id"+searchedVid.getId());
             fileManager.getVideoData(searchedVid, in);
+            return true;
         }
+        return false;
 
     }
 
-    public void storeFile(int id, MultipartFile fi) throws IOException
+    public boolean storeFile(long id, MultipartFile fi) throws IOException
     {
         Video searchedVid = null;
         for(Video vid: addedVids)
@@ -63,7 +67,10 @@ public class MyService
         if(searchedVid!= null)
         {
             fileManager.saveVideoData(searchedVid, fi.getInputStream());
+            return true;
         }
+        return false;
+//        throw new IOException();
 //        return false;
     }
 }
