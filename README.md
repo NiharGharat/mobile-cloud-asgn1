@@ -1,3 +1,112 @@
+# Had to rewrite entire code with maven beacuse was unable to build the project with gradle
+- Maven project
+- All get requests need a unique id which is generated when the poject main class is excuted.
+
+# Steps
+- A difference between request params and request header(no request body used as it is a GET request)
+- A unique int is gen and sout at start of app, that is used to get all video list under header "id"
+
+Consolidated doc of learning
+GET request
+- I sent this not in body, as get has body disabled.
+- HEaders
+	- id	->	 961528960
+	- Content-type	->	application/json(Although this was not req)
+
+- Its curl
+curl -X GET \
+  http://localhost:9876/video/listAll \
+  -H 'cache-control: no-cache' \
+  -H 'content-type: application/json' \
+  -H 'id: 857141903' \
+  -H 'postman-token: de258de1-a730-8cfd-356d-cab01ae7ce0d'
+
+- Method signature
+public List<Video> getVideoList(@RequestHeader(name = "ida") int hello, @RequestParam(name = "id") int validId)
+
+POST meta
+- In headers, set Content-type as application/json
+- In body, I sent raw, with JSON(application/json) with payload as 
+{
+	"duration" : "5",
+	"id" : "1",
+	"videoOwner" : "niharGharat"
+}
+
+- Its curl
+curl -X POST \
+  http://localhost:9876/video \
+  -H 'cache-control: no-cache' \
+  -H 'content-type: application/json' \
+  -H 'postman-token: 60af77b0-c214-2c63-070e-1f29eb66fd1d' \
+  -d '{
+	"duration" : "5",
+	"id" : "2",
+	"videoOwner" : "OhhHello"
+}'
+
+- Method signature
+public VideoResponseStatus postMetaVideo(@RequestBody Video videoMetaToPost)
+
+POST multipart data
+-- To make it multipart compatible, I had to remove postmas content type which I had set manually to multipart/form-data
+- Postmans correct curl
+curl -X POST \
+  http://localhost:9876/video/010720201593621845993/data \
+  -H 'cache-control: no-cache' \
+  -H 'content-type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW' \
+  -H 'postman-token: 919005ca-59ec-51ea-386d-6647f9f64431' \
+  -F data=@video2.mpg
+
+- Earlier incorrect curl
+curl -X POST \
+  http://localhost:9876/video/010720201593621845993/data \
+  -H 'cache-control: no-cache' \
+  -H 'content-type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW' \
+  -H 'postman-token: 837f5904-e566-0538-2553-853f1b5d5ae4' \
+  -F data=@video2.mpg
+
+- Method signature
+public VideoResponseStatus postDataVideo(@RequestParam(name = "data") MultipartFile multipartFile, @PathVariable(name = "id") String id) throws Exception {
+
+- @PostMapping(path = "/video/{id}/data")
+- I had to UNSET the content type, and also, I had to include the multipart file under data, which I had mapped in the controller under "data" as a REQUEST PARAM and not as a request body.
+
+--------------------------------------------------------------
+- Steps to use, on the applciation on port 9876
+- Get the unique id gen as a sout in spring app start
+- Use that id under "id" for GET in headers to see the video lists
+- For POST the file, first POST meta info, this will return a unique identifier whihc u shd use in /video/{unqId}/data
+- We need the content-type in POST for meta, and dont need it in POST for data(multipart)
+- The POST on data will only gen a file in desktop env.
+- All the confs are set in postman
+- POSTMAN correct cURLs
+-- GET
+curl -X GET \
+  http://localhost:9876/video/listAll \
+  -H 'cache-control: no-cache' \
+  -H 'content-type: application/json' \
+  -H 'id: 1525469793' \
+  -H 'postman-token: 1d24715d-2de6-5b2b-6bcc-ff95c6a21bd8'
+-- POST meta
+curl -X POST \
+  http://localhost:9876/video \
+  -H 'cache-control: no-cache' \
+  -H 'content-type: application/json' \
+  -H 'postman-token: 19289a28-3a78-3a93-bf87-d7448a0220d3' \
+  -d '{
+	"duration" : "5",
+	"videoOwner" : "OhhHello"
+}'
+-- POST data
+curl -X POST \
+  http://localhost:9876/video/010720201593621845993/data \
+  -H 'cache-control: no-cache' \
+  -H 'content-type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW' \
+  -H 'postman-token: b6fc363b-f105-060b-d8a9-16a9ac3914f2' \
+  -F data=@video2.mpg
+# end of setps
+
 # Application To Upload/Download video To/From A Cloud Service
 
 This project is my solution to Jules White's first assignement on
@@ -5,91 +114,6 @@ This project is my solution to Jules White's first assignement on
 
 ## Running the Application
 
-To run the application:
-
-Right-click on the Application class in the org.magnum.dataup
-package, Run As->Java Application
-
-To stop the application:
-
-Open the Eclipse Debug Perspective (Window->Open Perspective->Debug), right-click on
-the application in the "Debug" view (if it isn't open, Window->Show View->Debug) and
-select Terminate
-
-## Overview
-
-A popular use of cloud services is to manage media that is uploaded
-from mobile devices. This assignment will create a very basic application
-for uploading video to a cloud service and managing the video's metadata.
-Once you are able to build this basic type of infrastructure, you will have
-the core knowledge needed to create much more sophisticated cloud services.
-
-
-## Instructions
-
-This assignment tests your ability to create a web application that
-allows clients to upload videos to a server. The server allows clients
-to first upload a video's metadata (e.g., duration, etc.) and then to
-upload the actual binary data for the video. The server should support
-uploading video binary data with a multipart request.
-
-The test that is used to grade your implementation is AutoGradingTest
-in the org.magnum.dataup package in src/test/java. **_You should use the
-source code in the AutoGradingTest as the ground truth for what the expected
-behavior of your solution is_.** Your app should pass this test without 
-any errors. The test methods are annotated with @Rubric and specify
-the number of points associated with each test, the purpose of the test,
-and the videos relevant to the test. 
-
-The HTTP API that you must implement so that this test will pass is as
-follows:
- 
-GET /video
-   - Returns the list of videos that have been added to the
-     server as JSON. The list of videos does not have to be
-     persisted across restarts of the server. The list of
-     Video objects should be able to be unmarshalled by the
-     client into a Collection<Video>.
-   - The return content-type should be application/json, which
-     will be the default if you use @ResponseBody
-
-     
-POST /video
-   - The video metadata is provided as an application/json request
-     body. The JSON should generate a valid instance of the 
-     Video class when deserialized by Spring's default 
-     Jackson library.
-   - Returns the JSON representation of the Video object that
-     was stored along with any updates to that object made by the server. 
-   - **_The server should generate a unique identifier for the Video
-     object and assign it to the Video by calling its setId(...)
-     method._** 
-   - No video should have ID = 0. All IDs should be > 0.
-   - The returned Video JSON should include this server-generated
-     identifier so that the client can refer to it when uploading the
-     binary mpeg video content for the Video.
-   - The server should also generate a "data url" for the
-     Video. The "data url" is the url of the binary data for a
-     Video (e.g., the raw mpeg data). The URL should be the _full_ URL
-     for the video and not just the path (e.g., http://localhost:8080/video/1/data would
-     be a valid data url). See the Hints section for some ideas on how to
-     generate this URL.
-     
-POST /video/{id}/data
-   - The binary mpeg data for the video should be provided in a multipart
-     request as a part with the key "data". The id in the path should be
-     replaced with the unique identifier generated by the server for the
-     Video. A client MUST *create* a Video first by sending a POST to /video
-     and getting the identifier for the newly created Video object before
-     sending a POST to /video/{id}/data. 
-   - The endpoint should return a VideoStatus object with state=VideoState.READY
-     if the request succeeds and the appropriate HTTP error status otherwise.
-     VideoState.PROCESSING is not used in this assignment but is present in VideoState.
-   - Rather than a PUT request, a POST is used because, by default, Spring 
-     does not support a PUT with multipart data due to design decisions in the
-     Commons File Upload library: https://issues.apache.org/jira/browse/FILEUPLOAD-197
-     
-     
 GET /video/{id}/data
    - Returns the binary mpeg data (if any) for the video with the given
      identifier. If no mpeg data has been uploaded for the specified video,
@@ -123,14 +147,3 @@ GET /video/{id}/data
  You should not modify any of the code in Video, VideoStatus, VideoSvcApi, AutoGrading,
  or AutoGradingTest. 
 
-## Testing Your Implementation
-
-To test your solution, first run the application as described above. Once your application
-is running, you can right-click on the AutoGradingTest->Run As->JUnit Test to launch the
-test. Eclipse will report which tests pass or fail.
-
-To get an estimated score for your solution, right-click on AutoGrading (not AutoGradingTest) and
-Run As->Java Application. The AutoGrading application will run AutoGradingTest and then print a
-summary of the test results and your score to the Eclipse Console (Window->Show View->Console). 
-The AutoGrading application will also create a submission package that you will submit as the
-solution to the assignment in Coursera.
