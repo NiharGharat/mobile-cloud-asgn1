@@ -1,6 +1,8 @@
 # Had to rewrite entire code with maven beacuse was unable to build the project with gradle
 - Maven project
 - All get requests need a unique id which is generated when the poject main class is excuted.
+- Only part which was unalbe to do was get on Video to transfer file to client.
+- Tried with postman, with responseEntity and Response.
 
 # Steps
 - A difference between request params and request header(no request body used as it is a GET request)
